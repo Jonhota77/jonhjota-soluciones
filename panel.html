@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Jonh Jota Soluciones</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+        }
+        .logo-panel {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        /* Tabla */
+        .citas-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .table-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+        .cita-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            align-items: center;
+        }
+        .cita-row:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        /* Estados */
+        .status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-nuevo { background: #dbeafe; color: #1e40af; }
+        .status-confirmado { background: #fef3c7; color: #92400e; }
+        .status-encurso { background: #fef3c7; color: #92400e; }
+        .status-completado { background: #dcfce7; color: #166534; }
+        .status-cancelado { background: #fee2e2; color: #991b1b; }
+        
+        /* Botones */
+        .btn {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-success { background: var(--secondary); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-small { padding: 5px 10px; font-size: 0.85rem; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .table-header, .cita-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            .mobile-hidden {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-panel">
+                <div style="background: var(--secondary); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div>
+                    <h3>Jonh Jota</h3>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">Panel de Control</p>
+                </div>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="#" class="nav-item active" onclick="showSection('citas')">
+                    <i class="fas fa-calendar-alt"></i> Citas Agendadas
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('clientes')">
+                    <i class="fas fa-users"></i> Clientes
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('servicios')">
+                    <i class="fas fa-cogs"></i> Servicios
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('finanzas')">
+                    <i class="fas fa-chart-line"></i> Finanzas
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('inventario')">
+                    <i class="fas fa-box"></i> Inventario
+                </a>
+                <a href="#" class="nav-item" onclick="exportarDatos()">
+                    <i class="fas fa-download"></i> Exportar Datos
+                </a>
+                <a href="index.html" class="nav-item" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Ver Sitio Web
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1 style="color: #1e293b;">Panel de Control</h1>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn btn-success" onclick="nuevaCita()">
+                        <i class="fas fa-plus"></i> Nueva Cita
+                    </button>
+                    <button class="btn" style="background: #64748b; color: white;" onclick="actualizarDatos()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCitas">0</div>
+                    <div style="color: #64748b;">Citas Totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="citasHoy">0</div>
+                    <div style="color: #64748b;">Citas Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="clientesTotales">0</div>
+                    <div style="color: #64748b;">Clientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="ingresosMes">$0</div>
+                    <div style="color: #64748b;">Ingresos Mes</div>
+                </div>
+            </div>
+            
+            <!-- Tabla de Citas -->
+            <div id="citasSection">
+                <h2 style="color: #1e293b; margin-bottom: 20px;">Citas Agendadas</h2>
+                <div class="citas-table">
+                    <div class="table-header">
+                        <div>Cliente</div>
+                        <div>Servicio</div>
+                        <div class="mobile-hidden">Fecha/Hora</div>
+                        <div>Estado</div>
+                        <div class="mobile-hidden">Teléfono</div>
+                        <div>Acciones</div>
+                    </div>
+                    
+                    <div id="citasList">
+                        <!-- Citas se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Clientes -->
+            <div id="clientesSection" style="display: none;">
+                <h2 style="color: #1e293b; margin-bottom: 20px;">Base de Clientes</h2>
+                <div class="citas-table">
+                    <div class="table-header">
+                        <div>Nombre</div>
+                        <div>Contacto</div>
+                        <div class="mobile-hidden">Dirección</div>
+                        <div>Citas</div>
+                        <div class="mobile-hidden">Última Visita</div>
+                        <div>Acciones</div>
+                    </div>
+                    <div id="clientesList"></div>
+                </div>
+            </div>
+            
+            <!-- Sección Servicios -->
+            <div id="serviciosSection" style="display: none;">
+                <h2 style="color: #1e293b; margin-bottom: 20px;">Servicios Más Solicitados</h2>
+                <div id="serviciosStats"></div>
+            </div>
+            
+            <!-- Sección Finanzas -->
+            <div id="finanzasSection" style="display: none;">
+                <h2 style="color: #1e293b; margin-bottom: 20px;">Resumen Financiero</h2>
+                <div id="finanzasStats"></div>
+            </div>
+            
+            <!-- Sección Inventario -->
+            <div id="inventarioSection" style="display: none;">
+                <h2 style="color: #1e293b; margin-bottom: 20px;">Inventario de Repuestos</h2>
+                <div id="inventarioList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Detalle Cita -->
+    <div class="modal" id="citaModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="color: #1e293b;">Detalle de Cita</h2>
+                <button onclick="cerrarModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">
+                    &times;
+                </button>
+            </div>
+            
+            <div id="citaDetalle">
+                <!-- Detalles se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos
+        let citas = [];
+        let clientes = [];
+        let inventario = [
+            { id: 1, nombre: "SSD 240GB", cantidad: 5, precio: 120000 },
+            { id: 2, nombre: "RAM 8GB DDR4", cantidad: 8, precio: 80000 },
+            { id: 3, nombre: "Pasta Térmica", cantidad: 20, precio: 15000 },
+            { id: 4, nombre: "Teclado Laptop", cantidad: 3, precio: 45000 },
+            { id: 5, nombre: "Windows 10 Licencia", cantidad: 12, precio: 60000 }
+        ];
+        
+        // Cargar datos
+        function cargarDatos() {
+            citas = JSON.parse(localStorage.getItem('jonhjota_citas') || '[]');
+            
+            // Extraer clientes únicos
+            const clientesMap = new Map();
+            citas.forEach(cita => {
+                if (!clientesMap.has(cita.telefono)) {
+                    clientesMap.set(cita.telefono, {
+                        nombre: cita.nombre,
+                        telefono: cita.telefono,
+                        email: cita.email,
+                        direccion: cita.direccion,
+                        citas: 1,
+                        ultimaVisita: cita.fecha
+                    });
+                } else {
+                    const cliente = clientesMap.get(cita.telefono);
+                    cliente.citas++;
+                    if (new Date(cita.fecha) > new Date(cliente.ultimaVisita)) {
+                        cliente.ultimaVisita = cita.fecha;
+                    }
+                }
+            });
+            
+            clientes = Array.from(clientesMap.values());
+            
+            actualizarEstadisticas();
+            renderCitas();
+        }
+        
+        function actualizarEstadisticas() {
+            // Totales
+            document.getElementById('totalCitas').textContent = citas.length;
+            document.getElementById('clientesTotales').textContent = clientes.length;
+            
+            // Citas hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            const citasHoy = citas.filter(c => c.fecha === hoy).length;
+            document.getElementById('citasHoy').textContent = citasHoy;
+            
+            // Ingresos estimados del mes
+            const mesActual = new Date().getMonth();
+            const citasMes = citas.filter(c => {
+                const fechaCita = new Date(c.fecha);
+                return fechaCita.getMonth() === mesActual;
+            });
+            
+            // Estimación básica (promedio $80,000 por servicio)
+            const ingresosEstimados = citasMes.length * 80000;
+            document.getElementById('ingresosMes').textContent = `$${ingresosEstimados.toLocaleString()}`;
+        }
+        
+        function renderCitas() {
+            const container = document.getElementById('citasList');
+            
+            if (citas.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #64748b;">
+                        <i class="fas fa-calendar" style="font-size: 3rem; opacity: 0.3; margin-bottom: 20px;"></i>
+                        <h3>No hay citas agendadas</h3>
+                        <p>Las citas que agenden desde tu sitio web aparecerán aquí.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Ordenar por fecha (más recientes primero)
+            citas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            container.innerHTML = '';
+            
+            citas.forEach(cita => {
+                const row = document.createElement('div');
+                row.className = 'cita-row';
+                
+                // Formatear fecha
+                const fecha = new Date(cita.fecha);
+                const fechaStr = fecha.toLocaleDateString('es-ES');
+                
+                // Estado
+                const estado = cita.status || 'nuevo';
+                const estadoTexto = {
+                    'nuevo': 'Nuevo',
+                    'confirmado': 'Confirmado',
+                    'encurso': 'En Curso',
+                    'completado': 'Completado',
+                    'cancelado': 'Cancelado'
+                };
+                
+                row.innerHTML = `
+                    <div>
+                        <strong>${cita.nombre}</strong>
+                        <div style="font-size: 0.85rem; color: #64748b;">${cita.equipo}</div>
+                    </div>
+                    
+                    <div>
+                        ${cita.servicio}
+                    </div>
+                    
+                    <div class="mobile-hidden">
+                        ${fechaStr}<br>
+                        <small style="color: #64748b;">${cita.horario || ''}</small>
+                    </div>
+                    
+                    <div>
+                        <span class="status status-${estado}">${estadoTexto[estado]}</span>
+                    </div>
+                    
+                    <div class="mobile-hidden">
+                        ${cita.telefono}
+                    </div>
+                    
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="cambiarEstado('${cita.id}', 'completado')" title="Completado">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="verDetalle('${cita.id}')" title="Ver Detalle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="eliminarCita('${cita.id}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+        
+        function renderClientes() {
+            const container = document.getElementById('clientesList');
+            
+            if (clientes.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #64748b;">No hay clientes registrados</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            clientes.forEach(cliente => {
+                const row = document.createElement('div');
+                row.className = 'cita-row';
+                
+                row.innerHTML = `
+                    <div>
+                        <strong>${cliente.nombre}</strong>
+                    </div>
+                    
+                    <div>
+                        ${cliente.telefono}<br>
+                        <small style="color: #64748b;">${cliente.email}</small>
+                    </div>
+                    
+                    <div class="mobile-hidden">
+                        ${cliente.direccion || 'No especificada'}
+                    </div>
+                    
+                    <div>
+                        ${cliente.citas} ${cliente.citas === 1 ? 'cita' : 'citas'}
+                    </div>
+                    
+                    <div class="mobile-hidden">
+                        ${new Date(cliente.ultimaVisita).toLocaleDateString('es-ES')}
+                    </div>
+                    
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="llamarCliente('${cliente.telefono}')">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="whatsappCliente('${cliente.telefono}')">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+        
+        function cambiarEstado(id, nuevoEstado) {
+            const index = citas.findIndex(c => c.id == id);
+            if (index !== -1) {
+                citas[index].status = nuevoEstado;
+                localStorage.setItem('jonhjota_citas', JSON.stringify(citas));
+                cargarDatos();
+                
+                alert(`Estado cambiado a: ${nuevoEstado}`);
+            }
+        }
+        
+        function verDetalle(id) {
+            const cita = citas.find(c => c.id == id);
+            if (!cita) return;
+            
+            const modal = document.getElementById('citaModal');
+            const detalle = document.getElementById('citaDetalle');
+            
+            detalle.innerHTML = `
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <p><strong>Cliente:</strong> ${cita.nombre}</p>
+                    <p><strong>Teléfono:</strong> ${cita.telefono}</p>
+                    <p><strong>Email:</strong> ${cita.email}</p>
+                    <p><strong>Dirección:</strong> ${cita.direccion}</p>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <p><strong>Servicio:</strong> ${cita.servicio}</p>
+                    <p><strong>Equipo:</strong> ${cita.equipo}</p>
+                    <p><strong>Fecha:</strong> ${cita.fecha} (${cita.horario})</p>
+                    <p><strong>Estado:</strong> <span class="status status-${cita.status || 'nuevo'}">${cita.status || 'Nuevo'}</span></p>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    <p><strong>Descripción del Problema:</strong></p>
+                    <p>${cita.problema || 'No especificado'}</p>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn btn-success" onclick="llamarCliente('${cita.telefono}')">
+                        <i class="fas fa-phone"></i> Llamar
+                    </button>
+                    <button class="btn" style="background: #25D366; color: white;" onclick="whatsappCliente('${cita.telefono}')">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="btn btn-warning" onclick="cambiarEstado('${cita.id}', 'completado')">
+                        <i class="fas fa-check"></i> Marcar Completado
+                    </button>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function cerrarModal() {
+            document.getElementById('citaModal').style.display = 'none';
+        }
+        
+        function eliminarCita(id) {
+            if (confirm('¿Seguro que quieres eliminar esta cita?')) {
+                citas = citas.filter(c => c.id != id);
+                localStorage.setItem('jonhjota_citas', JSON.stringify(citas));
+                cargarDatos();
+            }
+        }
+        
+        function llamarCliente(telefono) {
+            window.open(`tel:${telefono}`, '_blank');
+        }
+        
+        function whatsappCliente(telefono) {
+            const mensaje = `Hola, soy Jonh de Jonh Jota Soluciones. Te contacto respecto a tu cita de servicio técnico.`;
+            window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+        
+        function nuevaCita() {
+            window.open('index.html#cita', '_blank');
+        }
+        
+        function actualizarDatos() {
+            cargarDatos();
+            alert('Datos actualizados');
+        }
+        
+        function exportarDatos() {
+            const data = {
+                citas: citas,
+                clientes: clientes,
+                exportado: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', `jonhjota_datos_${new Date().toISOString().split('T')[0]}.json`);
+            link.click();
+        }
+        
+        function showSection(sectionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('[id$="Section"]').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Mostrar la sección seleccionada
+            document.getElementById(`${sectionId}Section`).style.display = 'block';
+            
+            // Actualizar navegación
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Renderizar contenido específico
+            if (sectionId === 'clientes') {
+                renderClientes();
+            } else if (sectionId === 'citas') {
+                renderCitas();
+            } else if (sectionId === 'servicios') {
+                renderServicios();
+            } else if (sectionId === 'finanzas') {
+                renderFinanzas();
+            } else if (sectionId === 'inventario') {
+                renderInventario();
+            }
+        }
+        
+        function renderServicios() {
+            const container = document.getElementById('serviciosStats');
+            
+            // Contar servicios más solicitados
+            const serviciosCount = {};
+            citas.forEach(cita => {
+                const servicio = cita.servicio;
+                serviciosCount[servicio] = (serviciosCount[servicio] || 0) + 1;
+            });
+            
+            // Ordenar
+            const serviciosArray = Object.entries(serviciosCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            serviciosArray.forEach(([servicio, cantidad]) => {
+                const porcentaje = Math.round((cantidad / citas.length) * 100);
+                
+                html += `
+                    <div style="background: white; padding: 20px; border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>${servicio}</span>
+                            <strong>${cantidad} citas</strong>
+                        </div>
+                        <div style="background: #e5e7eb; height: 10px; border-radius: 5px; overflow: hidden;">
+                            <div style="background: var(--primary); width: ${porcentaje}%; height: 100%;"></div>
+                        </div>
+                        <div style="text-align: right; margin-top: 5px; font-size: 0.85rem; color: #64748b;">
+                            ${porcentaje}% del total
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderFinanzas() {
+            const container = document.getElementById('finanzasStats');
+            
+            // Calcular ingresos por mes (últimos 6 meses)
+            const meses = [];
+            const ingresos = [];
+            
+            for (let i = 5; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setMonth(fecha.getMonth() - i);
+                const mes = fecha.toLocaleString('es-ES', { month: 'short' });
+                meses.push(mes);
+                
+                // Simular ingresos (en producción esto vendría de datos reales)
+                const ingresosMes = Math.floor(Math.random() * 5 + 3) * 80000;
+                ingresos.push(ingresosMes);
+            }
+            
+            const totalIngresos = ingresos.reduce((a, b) => a + b, 0);
+            const promedioMensual = Math.round(totalIngresos / 6);
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: white; padding: 25px; border-radius: 15px;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--secondary);">$${totalIngresos.toLocaleString()}</div>
+                        <div style="color: #64748b;">Ingresos últimos 6 meses</div>
+                    </div>
+                    
+                    <div style="background: white; padding: 25px; border-radius: 15px;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">$${promedioMensual.toLocaleString()}</div>
+                        <div style="color: #64748b;">Promedio mensual</div>
+                    </div>
+                    
+                    <div style="background: white; padding: 25px; border-radius: 15px;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--warning);">${citas.length}</div>
+                        <div style="color: #64748b;">Total de servicios</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 25px; border-radius: 15px; margin-top: 20px;">
+                    <h3 style="color: #1e293b; margin-bottom: 20px;">Evolución de Ingresos</h3>
+                    <div style="display: flex; align-items: flex-end; height: 200px; gap: 20px;">
+                        ${ingresos.map((ingreso, index) => `
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                                <div style="background: var(--primary); width: 40px; height: ${(ingreso / Math.max(...ingresos)) * 150}px; border-radius: 5px;"></div>
+                                <div style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">${meses[index]}</div>
+                                <div style="font-size: 0.85rem; font-weight: bold;">$${(ingreso/1000).toFixed(0)}k</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderInventario() {
+            const container = document.getElementById('inventarioList');
+            
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    ${inventario.map(item => `
+                        <div style="background: white; padding: 20px; border-radius: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="color: #1e293b;">${item.nombre}</h3>
+                                <span class="status ${item.cantidad < 3 ? 'status-cancelado' : 'status-completado'}">
+                                    ${item.cantidad} unidades
+                                </span>
+                            </div>
+                            <p style="color: #64748b; margin-bottom: 15px;">Precio: $${item.precio.toLocaleString()}</p>
+                            <p style="color: #64748b; margin-bottom: 20px;">Valor total: $${(item.cantidad * item.precio).toLocaleString()}</p>
+                            <button class="btn btn-success" onclick="alert('Función de reorden en desarrollo')">
+                                <i class="fas fa-shopping-cart"></i> Reordenar
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDatos();
+            
+            // Cerrar modal al hacer clic fuera
+            document.getElementById('citaModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    cerrarModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
